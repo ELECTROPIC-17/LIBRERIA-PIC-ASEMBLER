@@ -1,0 +1,129 @@
+	cblock
+		DATOA_H
+		DATOA_L
+		DATOD_H
+		DATOD_L
+		DATOB_H
+		DATOB_L
+		DATOC_H	
+		DATOC_L	
+		CONTADOR
+		BCD_5
+		BCD_4
+		BCD_3		
+		BCD_2		
+		BCD_1		
+		BCD_0		
+		TEMPORAL
+	endc
+;**************************************************
+; Esta rutina convierte un número de 16 bits a BCD
+; Entrada:
+;            DATOC_H (MSB) - DATOC_L (LSB)
+; Salida:
+;              (+) BCD_0, BCD_1, BCD_2 (-)
+; Tiempo:
+;                20MHz <--> t=172 us
+;**************************************************
+BITS16_BCD
+	BCF	STATUS,C
+	CLRF	BCD_0
+	CLRF	BCD_1
+	CLRF	BCD_2
+
+	MOVLW	D'16'
+	MOVWF	CONTADOR
+LOOP_16
+	RLF	DATOC_L,1
+	RLF	DATOC_H,1
+	RLF	BCD_2,1
+	RLF	BCD_1,1
+	RLF	BCD_0,1
+	DECFSZ	CONTADOR,1
+	GOTO	AJUSTE
+	RETURN
+AJUSTE
+	MOVLW	BCD_2
+	MOVWF	FSR
+	CALL	AJUSTE_BCD
+	INCF	FSR,1
+	CALL	AJUSTE_BCD
+	INCF	FSR,1
+	CALL	AJUSTE_BCD
+	GOTO	LOOP_16
+AJUSTE_BCD
+	MOVF	INDF,W
+	ADDLW	0X03
+	MOVWF	TEMPORAL
+	BTFSC	TEMPORAL,3
+	MOVWF	INDF
+	MOVF	INDF,W
+	ADDLW	0X30
+	MOVWF	TEMPORAL
+	BTFSC	TEMPORAL,7
+	MOVWF	INDF
+	RETURN
+
+;**************************************************
+; Esta rutina convierte un número de 32 bits a BCD
+; Entrada:
+;            DATOC_H (MSB) - DATOC_L 
+;            DATOB_H       - DATOB_L (LSB)
+; Salida:
+;     (+) BCD0, BCD1, BCD2, BCD3, BCD4, BCD5 (-) 
+; Tiempo:
+;                20MHz <--> t= 664us
+;**************************************************
+BITS32_BCD
+	BCF 	STATUS,C
+	CLRF	BCD_0
+	CLRF	BCD_1
+	CLRF	BCD_2
+	CLRF	BCD_3
+	CLRF	BCD_4
+	CLRF	BCD_5
+	
+	MOVLW	D'32'
+	MOVWF	CONTADOR
+LOOP_32
+	RLF 	DATOB_L,1
+	RLF	DATOB_H,1
+	RLF 	DATOC_L,1
+	RLF	DATOC_H,1
+	RLF 	BCD_5,1
+	RLF	BCD_4,1
+	RLF	BCD_3,1
+	RLF 	BCD_2,1
+	RLF	BCD_1,1
+	RLF	BCD_0,1
+	DECFSZ	CONTADOR,1
+	GOTO	AJUSTE32
+	RETURN
+AJUSTE32
+	MOVLW	BCD_5
+	MOVWF	FSR
+	CALL	AJUSTE_BCD32
+	INCF	FSR,1
+	CALL	AJUSTE_BCD32
+	INCF	FSR,1
+	CALL	AJUSTE_BCD32
+	INCF	FSR,1
+	CALL	AJUSTE_BCD32
+	INCF	FSR,1
+	CALL	AJUSTE_BCD32
+	INCF	FSR,1
+	CALL	AJUSTE_BCD32
+	GOTO	LOOP_32
+AJUSTE_BCD32
+	MOVF	INDF,W
+	ADDLW	0X03
+	MOVWF	TEMPORAL
+	BTFSC	TEMPORAL,3
+	MOVWF	INDF
+	MOVF	INDF,W
+	ADDLW	0X30
+	MOVWF	TEMPORAL
+	BTFSC	TEMPORAL,7
+	MOVWF	INDF
+	RETURN
+
